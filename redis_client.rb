@@ -1,14 +1,18 @@
 # coding: utf-8
+require "rubygems"
+require "pathname"
+require "yaml"
 require "redis"
 class RedisTools
 	# connect redis database
-	def initialize(host, port, db)
-		base_hash = {host: localhost, port: port, db: db}
-		@redis = Redis.new(base_hash)
+	def initialize
+		path = File.join(File.dirname(Pathname.new(__FILE__).realpath.to_path))
+		redis_path = YAML::load(File.read(File.join(path , 'config' , 'redis.yml')))
+		@redis = Redis.new(host: redis_path["host"], port: redis_path["port"], db: redis_path["db"])
 	end
 
 	#delete key
-	def self.delete(key, value = nil)
+	def delete(key, value = nil)
 		key_type = @redis.type(key)
 		status = false
 		if key_type.eql?("string")
@@ -36,14 +40,14 @@ class RedisTools
 		return status
 	end
 
-	def self.delete_values_in_set(key, value)#value is an array
+	def delete_values_in_set(key, value)#value is an array
 		value.each do |item|
 			@redis.srem(key, item)
 		end
 		return true
 	end
 
-	def self.delete_values_in_zset(key, value, delete_way)#value is an array
+	def delete_values_in_zset(key, value, delete_way)#value is an array
 		status = false
 		if delete_way.eql?("element")
 			value.each do |item|
@@ -66,7 +70,7 @@ class RedisTools
 
 
 	#write key through different way
-	def self.write_list_or_hash(key)
+	def write_list_or_hash(key)
 		begin
 			status = true
 			block_element = yield
@@ -90,7 +94,7 @@ class RedisTools
 		return status
 	end
 
-	def self.write_set_or_zset(key)
+	def write_set_or_zset(key)
 		begin
 			status = true
 			block_element = yield
@@ -112,7 +116,7 @@ class RedisTools
 		return status
 	end	
 
-	def self.rewrite_list_or_hash(key)
+	def rewrite_list_or_hash(key)
 		begin
 			status = true
 			block_element = yield
@@ -135,7 +139,7 @@ class RedisTools
 		return status
 	end
 
-	def self.rewrite_set_or_zset(key)
+	def rewrite_set_or_zset(key)
 		begin
 			status = true
 			block_element = yield
@@ -159,7 +163,7 @@ class RedisTools
 	end
 
 	#fetch key value
-	def self.get_element(key)
+	def get_element(key)
 		key_type = @redis.type(key)
 		return_value = nil
 		if key_type.eql?("none")
