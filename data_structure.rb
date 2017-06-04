@@ -86,4 +86,3 @@ module DataStructure
 			return @items.size
 		end
 	end
-end
